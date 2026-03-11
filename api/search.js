@@ -2,20 +2,19 @@ const HOST    = "sky-scrapper.p.rapidapi.com";
 const API_KEY = process.env.RAPIDAPI_KEY;
 
 const AIRPORTS = {
-  BKK: { skyId: "BKK", entityId: "95673827" },
-  HKT: { skyId: "HKT", entityId: "95673538" },
-  PRG: { skyId: "PRG", entityId: "27539733" },
-  VIE: { skyId: "VIE", entityId: "27539548" },
-  FRA: { skyId: "FRA", entityId: "27539561" },
-  IST: { skyId: "IST", entityId: "27537542" },
-  CTU: { skyId: "CTU", entityId: "27536621" },
-  KMG: { skyId: "KMG", entityId: "27536603" },
-  CAN: { skyId: "CAN", entityId: "27536590" },
-  XIY: { skyId: "XIY", entityId: "27536649" },
-  MCT: { skyId: "MCT", entityId: "27537090" },
-  JED: { skyId: "JED", entityId: "27537166" },
+  BKK: { skyId: "BKK", entityId: "95673349" },
+  HKT: { skyId: "HKT", entityId: "104120378" },
+  PRG: { skyId: "PRG", entityId: "95673502" },
+  VIE: { skyId: "VIE", entityId: "95673444" },
+  IST: { skyId: "IST", entityId: "95673323" },
+  CTU: { skyId: "CTU", entityId: "128668393" },
+  KMG: { skyId: "KMG", entityId: "128667909" },
+  CAN: { skyId: "CAN", entityId: "128668169" },
+  MCT: { skyId: "MCT", entityId: "104120234" },
   TBS: { skyId: "TBS", entityId: "27537401" },
   ALA: { skyId: "ALA", entityId: "27537739" },
+  JED: { skyId: "JED", entityId: "27537166" },
+  XIY: { skyId: "XIY", entityId: "27536649" },
   PEK: { skyId: "PEK", entityId: "27536392" },
 };
 
