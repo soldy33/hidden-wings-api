@@ -1,0 +1,12 @@
+{
+  "name": "hidden-wings-api",
+  "version": "1.0.0",
+  "description": "Hidden Wings flight search backend",
+  "main": "api/search.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
