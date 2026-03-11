@@ -1,22 +1,4 @@
-const HOST    = "sky-scrapper.p.rapidapi.com";
-const API_KEY = process.env.RAPIDAPI_KEY;
-
-const AIRPORTS = {
-  BKK: { skyId: "BKK", entityId: "95673349" },
-  HKT: { skyId: "HKT", entityId: "104120378" },
-  PRG: { skyId: "PRG", entityId: "95673502" },
-  VIE: { skyId: "VIE", entityId: "95673444" },
-  IST: { skyId: "IST", entityId: "95673323" },
-  CTU: { skyId: "CTU", entityId: "128668393" },
-  KMG: { skyId: "KMG", entityId: "128667909" },
-  CAN: { skyId: "CAN", entityId: "128668169" },
-  MCT: { skyId: "MCT", entityId: "104120234" },
-  TBS: { skyId: "TBS", entityId: "27537401" },
-  ALA: { skyId: "ALA", entityId: "27537739" },
-  JED: { skyId: "JED", entityId: "27537166" },
-  XIY: { skyId: "XIY", entityId: "27536649" },
-  PEK: { skyId: "PEK", entityId: "27536392" },
-};
+const SERP_KEY = process.env.SERP_API_KEY;
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -24,7 +6,6 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   const { from, to, date, cabin = "economy" } = req.query;
 
@@ -32,57 +13,49 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Chybi parametry: from, to, date" });
   }
 
-  if (!API_KEY) {
-    return res.status(500).json({ error: "RAPIDAPI_KEY neni nastaven" });
-  }
-
-  const origin = AIRPORTS[from];
-  const dest   = AIRPORTS[to];
-
-  if (!origin) return res.status(404).json({ error: `Nezname letiste: ${from}` });
-  if (!dest)   return res.status(404).json({ error: `Nezname letiste: ${to}` });
+  const cabinMap = { economy: "1", business: "2", first: "3" };
+  const cabinClass = cabinMap[cabin] || "1";
 
   try {
     const params = new URLSearchParams({
-      originSkyId:         origin.skyId,
-      destinationSkyId:    dest.skyId,
-      originEntityId:      origin.entityId,
-      destinationEntityId: dest.entityId,
-      cabinClass:          cabin,
-      adults:              "1",
-      sortBy:              "price_low",
-      currency:            "THB",
-      market:              "en-US",
-      countryCode:         "TH",
-      date,
+      engine:          "google_flights",
+      departure_id:    from,
+      arrival_id:      to,
+      outbound_date:   date,
+      currency:        "THB",
+      hl:              "en",
+      travel_class:    cabinClass,
+      adults:          "1",
+      type:            "2", // one-way
+      api_key:         SERP_KEY,
     });
 
-    const flightRes = await fetch(
-      `https://${HOST}/api/v2/flights/searchFlightsComplete?${params}`,
-      { headers: { "x-rapidapi-host": HOST, "x-rapidapi-key": API_KEY } }
-    );
+    const r = await fetch(`https://serpapi.com/search?${params}`);
+    const data = await r.json();
 
-    if (!flightRes.ok) {
-      const err = await flightRes.text();
-      return res.status(flightRes.status).json({ error: `RapidAPI: ${err.slice(0, 300)}` });
+    if (data.error) {
+      return res.status(400).json({ error: data.error });
     }
 
-    const data = await flightRes.json();
-    const itineraries = data?.data?.itineraries;
+    // Vezmi nejlevnější let
+    const flights = [
+      ...(data.best_flights || []),
+      ...(data.other_flights || []),
+    ];
 
-    if (!itineraries || itineraries.length === 0) {
+    if (flights.length === 0) {
       return res.json({ found: false, price: null, from, to, cabin });
     }
 
-    const best = itineraries[0];
-    const leg  = best?.legs?.[0];
+    const best = flights[0];
+    const leg  = best.flights?.[0];
 
     return res.json({
       found:    true,
-      price:    Math.round(parseFloat(best?.price?.raw || 0)),
-      airline:  leg?.carriers?.marketing?.[0]?.name || "Unknown",
-      duration: formatMins(leg?.durationInMinutes),
-      stops:    leg?.stopCount ?? 0,
+      price:    Math.round(best.price),
+      airline:  leg?.airline || "Unknown",
+      duration: best.total_duration ? `${Math.floor(best.total_duration/60)}h ${best.total_duration%60}m` : "N/A",
+      stops:    (best.flights?.length || 1) - 1,
       cabin:    cabin === "business" ? "Business" : "Economy",
       from, to,
     });
@@ -90,9 +63,4 @@ export default async function handler(req, res) {
   } catch(e) {
     return res.status(500).json({ error: e.message });
   }
-}
-
-function formatMins(m) {
-  if (!m) return "N/A";
-  return `${Math.floor(m/60)}h ${m%60}m`;
 }
