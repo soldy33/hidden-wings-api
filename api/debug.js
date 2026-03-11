@@ -18,11 +18,33 @@ export default async function handler(req, res) {
     date:                "2026-05-10",
   });
 
-  const r = await fetch(
+  // Krok 1: první request - získej sessionId
+  const r1 = await fetch(
     `https://${HOST}/api/v1/flights/searchFlights?${params}`,
     { headers: { "x-rapidapi-host": HOST, "x-rapidapi-key": API_KEY } }
   );
+  const d1 = await r1.json();
+  const sessionId = d1?.data?.flightsSessionId;
 
-  const text = await r.text();
-  return res.json({ status: r.status, raw: text.slice(0, 2000) });
+  if (!sessionId) {
+    return res.json({ error: "Neni sessionId", d1 });
+  }
+
+  // Krok 2: polling se sessionId
+  await new Promise(r => setTimeout(r, 2000));
+
+  const params2 = new URLSearchParams({
+    sessionId,
+    currency: "THB",
+    market:   "en-US",
+    countryCode: "TH",
+  });
+
+  const r2 = await fetch(
+    `https://${HOST}/api/v1/flights/getFlightDetails?${params2}`,
+    { headers: { "x-rapidapi-host": HOST, "x-rapidapi-key": API_KEY } }
+  );
+
+  const text2 = await r2.text();
+  return res.json({ sessionId, status: r2.status, raw: text2.slice(0, 3000) });
 }
