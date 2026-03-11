@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   });
 
   const r = await fetch(
-    `https://${HOST}/api/v2/flights/searchFlightsComplete?${params}`,
+    `https://${HOST}/api/v1/flights/searchFlights?${params}`,
     { headers: { "x-rapidapi-host": HOST, "x-rapidapi-key": API_KEY } }
   );
 
